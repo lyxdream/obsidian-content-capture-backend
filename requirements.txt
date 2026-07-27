@@ -2,3 +2,6 @@ requests>=2.31.0
 faster-whisper>=1.0.3
 zhconv>=1.4.3
 flask>=3.0.0
+lark-oapi>=1.7.1
+pyobjc-framework-Vision>=12.2.1; sys_platform == "darwin"
+pyobjc-framework-Quartz>=12.2.1; sys_platform == "darwin"

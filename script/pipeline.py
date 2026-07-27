@@ -9,6 +9,8 @@ from script.audio_extractor import extract_audio
 from script.config import Settings
 from script.douyin_resolver import DouyinContentMeta, resolve_douyin_share
 from script.downloader import download_file
+from script.frame_extractor import extract_video_frames
+from script.frame_ocr import FrameOCRError, ocr_frame_dir
 from script.transcriber import TranscriptResult, to_simplified_chinese, transcribe_audio
 from script.utils import build_output_dir
 
@@ -123,6 +125,14 @@ def _process_video(
     if not video_path.exists():
         download_file(meta.download_url, video_path)
 
+    frames_dir = out_dir / "frames"
+    frames_manifest = extract_video_frames(video_path, frames_dir)
+    try:
+        ocr_frame_dir(frames_dir)
+        frames_ocr = frames_dir / "frame_ocr.json"
+    except FrameOCRError:
+        frames_ocr = None
+
     if cfg.skip_transcribe:
         _write_transcript_files(
             out_dir,
@@ -131,6 +141,9 @@ def _process_video(
             extra_files={
                 "video": video_path.name,
                 "download_url": download_url_path.name,
+                "frames_dir": frames_dir.name,
+                "frames_manifest": str(frames_manifest.relative_to(out_dir)),
+                **({"frames_ocr": str(frames_ocr.relative_to(out_dir))} if frames_ocr else {}),
             },
         )
         return
@@ -160,6 +173,9 @@ def _process_video(
             "video": video_path.name,
             "audio": audio_path.name,
             "download_url": download_url_path.name,
+            "frames_dir": frames_dir.name,
+            "frames_manifest": str(frames_manifest.relative_to(out_dir)),
+            **({"frames_ocr": str(frames_ocr.relative_to(out_dir))} if frames_ocr else {}),
         },
     )
 
